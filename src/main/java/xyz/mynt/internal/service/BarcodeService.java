@@ -18,6 +18,7 @@ import xyz.mynt.internal.config.AppConfig;
 import xyz.mynt.internal.exception.MerchantSimulatorConnectionException;
 import xyz.mynt.internal.exception.MerchantSimulatorException;
 import xyz.mynt.internal.exception.MerchantSimulatorTimeoutException;
+import xyz.mynt.internal.repository.TransactionLogJpaRepository;
 import xyz.mynt.internal.type.ProcessBarcodeRequest;
 import xyz.mynt.internal.type.ProcessBarcodeResponse;
 
@@ -35,11 +36,11 @@ public class BarcodeService {
 	@Autowired
 	private RestTemplate restTemplate;
 	
+	@Autowired
+	private TransactionLogJpaRepository transactionLogRepository;
+	
 	public ProcessBarcodeResponse processBarcode(ProcessBarcodeRequest processBarcodeRequest) throws Exception {
-		
-		LOGGER.info("CAROL processBarcodeRequest " + processBarcodeRequest.toString());
-		LOGGER.info("CAROL processBarcodeRequest " + appConfig.getEsbProcessBarcodeUrl());
-		
+
 		ProcessBarcodeResponse response = null;
 		
 		try {
