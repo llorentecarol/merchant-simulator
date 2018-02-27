@@ -1,12 +1,25 @@
 package xyz.mynt.internal.service;
 
+import java.net.SocketTimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import xyz.mynt.internal.ApplicationConstants;
+import xyz.mynt.internal.config.AppConfig;
+import xyz.mynt.internal.exception.MerchantSimulatorConnectionException;
+import xyz.mynt.internal.exception.MerchantSimulatorException;
+import xyz.mynt.internal.exception.MerchantSimulatorTimeoutException;
 import xyz.mynt.internal.type.ProcessBarcodeRequest;
+import xyz.mynt.internal.type.ProcessBarcodeResponse;
 
 @Service
 public class BarcodeService {
@@ -14,12 +27,52 @@ public class BarcodeService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BarcodeService.class);
 	
 	@Autowired
+	private AppConfig appConfig;
+	
+	@Autowired
+	private ObjectMapper objectMapper;
+	
+	@Autowired
 	private RestTemplate restTemplate;
 	
-	public void processBarcode(ProcessBarcodeRequest processBarcodeRequest) {
+	public ProcessBarcodeResponse processBarcode(ProcessBarcodeRequest processBarcodeRequest) throws Exception {
 		
 		LOGGER.info("CAROL processBarcodeRequest " + processBarcodeRequest.toString());
+		LOGGER.info("CAROL processBarcodeRequest " + appConfig.getEsbProcessBarcodeUrl());
 		
+		ProcessBarcodeResponse response = null;
+		
+		try {
+			
+			ResponseEntity<ProcessBarcodeResponse> responseEntity = restTemplate.postForEntity(appConfig.getEsbProcessBarcodeUrl(), processBarcodeRequest,
+					ProcessBarcodeResponse.class);
+			response = responseEntity.getBody();
+			
+		} catch (HttpClientErrorException e) {
+			e.printStackTrace();
+			ProcessBarcodeResponse exResponse = objectMapper.readValue(e.getResponseBodyAsString(), ProcessBarcodeResponse.class);
+
+			LOGGER.error("HttpClientErrorException" + exResponse);
+			// TODO Add expected error response
+			if (null != exResponse && null != exResponse.getStatus() && exResponse.getStatus().equals("ERROR_TEST")) {
+				return exResponse;
+			}
+
+			throw new MerchantSimulatorException(ApplicationConstants.NOT_FOUND_CODE, "", processBarcodeRequest);
+
+		} catch (ResourceAccessException e) {
+			System.out.println("timeouts");
+			e.getRootCause().printStackTrace();
+			if (e.getRootCause() instanceof SocketTimeoutException) {
+				throw new MerchantSimulatorTimeoutException("", "", processBarcodeRequest);
+			}
+			throw new MerchantSimulatorConnectionException("", "", processBarcodeRequest);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MerchantSimulatorConnectionException("", "generic error", processBarcodeRequest);
+		}
+
+		return response;
     	/*
     	//TODO: change this to Criteria Builder to dynamically create json request
     	String requestJSON = "{\"timeSpent\" : \"1h\", \"comment\" : \"carol spring test\"}";

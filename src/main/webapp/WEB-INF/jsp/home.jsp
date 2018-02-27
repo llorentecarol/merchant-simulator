@@ -31,7 +31,7 @@
 
 		<div class="starter-template">
 		
-			<font color="red">${barcode.getBarcodeString()}</font> <br>
+			<font color="red">${error}</font> <br>
 			
 			<%-- <img src="<c:url value='sevenEleven.png'/>" /> --%>
 			
