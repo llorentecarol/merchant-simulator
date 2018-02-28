@@ -4,9 +4,12 @@ public class ApplicationConstants {
 	
 	public static final String TXN_NEW = "NEW";
 	public static final String TXN_PROCESSING = "PROCESSING";
-	public static final String TXN_PROCESSED = "PROCESSED";
+	public static final String TXN_TIMEOUT = "TIMEOUT";
+	public static final String TXN_REPROCESS = "REPROCESS";
+	public static final String TXN_SUCCESSFUL = "SUCCESSFUL";
 	public static final String TXN_FAILED = "FAILED";
 
+	public static final String CHANNEL_INTERNAL = "INTERNAL";
 	public static final String CHANNEL_INBOUND = "INBOUND";
 	public static final String CHANNEL_OUTBOUND = "OUTBOUND";
 	

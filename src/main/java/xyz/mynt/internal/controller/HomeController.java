@@ -12,6 +12,7 @@ import xyz.mynt.internal.ApplicationConstants;
 import xyz.mynt.internal.service.BarcodeService;
 import xyz.mynt.internal.service.LoggerService;
 import xyz.mynt.internal.type.ProcessBarcodeRequest;
+import xyz.mynt.internal.type.ProcessBarcodeResponse;
 import xyz.mynt.internal.util.SimulatorUtil;
 
 @Controller
@@ -31,24 +32,26 @@ public class HomeController {
     }
     
     @GetMapping(value="/process-barcode")
-    public String processBarcode(ModelMap model, @RequestParam String serviceType, @RequestParam String barcodeString) {    	
+    public String processBarcode(ModelMap model, @RequestParam int timeout, @RequestParam String serviceType, @RequestParam String barcodeString) {    	
     	ProcessBarcodeRequest processBarcodeRequest = new ProcessBarcodeRequest();
     	processBarcodeRequest.setServiceType(serviceType);
     	processBarcodeRequest.setBarcodeString(barcodeString);
+    	processBarcodeRequest.setTimeout(timeout);
     	
     	String transId = SimulatorUtil.getTransactionID();
-    	loggerService.logTransaction(transId, ApplicationConstants.TXN_NEW, processBarcodeRequest.toString(), ApplicationConstants.CHANNEL_OUTBOUND);
+    	loggerService.logTransaction(transId, ApplicationConstants.TXN_NEW, processBarcodeRequest.toString(), ApplicationConstants.CHANNEL_INTERNAL);
 		
     	try {
-    		loggerService.logTransaction(transId, ApplicationConstants.TXN_PROCESSING, processBarcodeRequest.toString(), ApplicationConstants.CHANNEL_OUTBOUND);
-        	barcodeService.processBarcode(processBarcodeRequest);
+    		loggerService.logTransaction(transId, ApplicationConstants.TXN_PROCESSING, processBarcodeRequest, ApplicationConstants.CHANNEL_OUTBOUND);
+    		ProcessBarcodeResponse response = barcodeService.processBarcode(processBarcodeRequest);
+        	loggerService.logTransaction(transId, ApplicationConstants.TXN_SUCCESSFUL, response, ApplicationConstants.CHANNEL_INBOUND);
 		} catch (Exception e) {
 			LOGGER.info("Exception occurred " + e.getMessage());
 			model.put("error", e.toString());
+			loggerService.logTransaction(transId, ApplicationConstants.TXN_FAILED, processBarcodeRequest.toString(), ApplicationConstants.CHANNEL_INBOUND);
 		}
     	
-        model.put("barcode", processBarcodeRequest);
-        model.put("barcodeString", barcodeString);
+        model.put("request", "Request: " + processBarcodeRequest);
         return "home";
     }
   

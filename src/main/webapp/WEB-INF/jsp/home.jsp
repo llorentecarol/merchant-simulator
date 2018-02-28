@@ -31,16 +31,22 @@
 
 		<div class="starter-template">
 		
-			<font color="red">${error}</font> <br>
-			
-			<%-- <img src="<c:url value='sevenEleven.png'/>" /> --%>
-			
-			Welcome ${barcode}!!
 			<br>
 			
 			<form action="/process-barcode">
 			
-				<table style="width:50%">
+				<table style="width:50%" cellpadding="10">
+					<tr>
+						<td>Simulate Timeout</td>
+						<td>
+							<select name="timeout">
+							    <option value="2000">2 seconds</option>
+							    <option value="5000">5 seconds</option>
+							    <option value="10000">10 seconds</option>
+							    <option value="60000">1 minute</option>
+							  </select>
+						</td>
+					</tr>
 					<tr>
 						<td>Service Type</td>
 						<td>
@@ -62,6 +68,12 @@
 				</table>
 			</form>
 
+		</div>
+		<div class="starter-template">
+			<font color="red">${error}</font>
+			<br>
+			
+			<p>${request} </p>
 		</div>
 
 	</div>

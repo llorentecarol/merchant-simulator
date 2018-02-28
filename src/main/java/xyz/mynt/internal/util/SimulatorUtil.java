@@ -1,6 +1,5 @@
 package xyz.mynt.internal.util;
 
-import java.sql.Timestamp;
 import java.util.Random;
 
 public class SimulatorUtil {
@@ -18,9 +17,4 @@ public class SimulatorUtil {
         return transID.toString();
 
     }
-	
-	public static Timestamp getTimeStamp() {
-		return new Timestamp(System.currentTimeMillis());
-    }
-	
 }

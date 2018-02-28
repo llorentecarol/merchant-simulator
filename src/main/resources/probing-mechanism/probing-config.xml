@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-ip="http://www.springframework.org/schema/integration/ip"
+	xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.0.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+		http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<int:poller id="probingPoller" fixed-rate="${probing.poller.config}"/>
+ 	
+	<int:channel id="queryDBMessageChannel"/>
+
+ 	<int:channel id="splitProbeDatachannel">
+ 		<int:interceptors>
+        	<int:wire-tap channel="transformChannel"/>
+        </int:interceptors>
+ 	</int:channel>
+ 	
+ 	<int:logging-channel-adapter channel="splitProbeDatachannel" expression="''" />
+ 	
+ 	<int:channel id="retryChannelCondition" />
+ 	<int:channel id="transformChannel" />
+
+	<int-jdbc:inbound-channel-adapter
+		data-source="dataSource"
+        query="SELECT TXN_DATE, PROBE_DATE, RRN, REQUEST_RRN, STATUS, SERVICE_CODE, ACCOUNT_NUMBER, PROBE_COUNTER, ORIG_TXN_DATA, HOST_RESPCODE FROM CMS_PROBE_POOL WHERE to_char(PROBE_DATE, 'DD-MON-YYYY HH24:MI') = to_char(sysdate, 'DD-MON-YYYY HH24:MI') AND (STATUS = 'FORPROBING' OR STATUS = 'ONGOING') AND PROBE_COUNTER &lt; ${probing.max.counter}"
+        update="UPDATE CMS_PROBE_POOL SET PROBE_COUNTER = NVL(PROBE_COUNTER, 0) + 1, STATUS = decode(PROBE_COUNTER, (${probing.max.counter} - 1), 'DONE', 'ONGOING'), PROBE_DATE = (PROBE_DATE + (${probing.minute.interval}/1440)) WHERE RRN IN (:rrn)"
+        row-mapper="probingRowMapper"
+        channel="queryDBMessageChannel">
+        <int:poller ref="probingPoller"/>
+    </int-jdbc:inbound-channel-adapter>
+
+	<bean id="probingRowMapper" class="com.smarthub.mpg.services.probing.rowmapper.ProbingDataRowMapper" />
+
+	<int:chain input-channel="queryDBMessageChannel" 
+    	output-channel="splitProbeDatachannel">
+    	<int:splitter />
+	</int:chain>
+
+	<int:logging-channel-adapter channel="splitProbeDatachannel" expression="''" />
+
+	<int:transformer input-channel="transformChannel" output-channel="retryChannelCondition"
+		ref="probingDataToISOTransformer" />
+
+	<bean id="probingDataToISOTransformer" class="com.smarthub.mpg.services.probing.transformer.ProbingDataToISOTransformer" />
+	
+    <!-- Provision router for multiple output channel implementation -->
+	<int:chain input-channel="retryChannelCondition">
+    	<int:router ref="probingRouter" method="route" />
+	</int:chain>
+
+	<bean id="probingRouter" class="com.smarthub.mpg.services.probing.router.ProbingRouter">
+		<constructor-arg name="probingMap">
+			<!-- add additional channel here (per services) -->
+			<map>
+				<entry key="PAYRLL" value="payrollReverseRequestChannel" />
+			</map>
+		</constructor-arg>
+	</bean>
+	
+
+</beans>
