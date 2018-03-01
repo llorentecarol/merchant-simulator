@@ -29,14 +29,14 @@
 
 	<int-jdbc:inbound-channel-adapter
 		data-source="dataSource"
-        query="SELECT TXN_DATE, PROBE_DATE, RRN, REQUEST_RRN, STATUS, SERVICE_CODE, ACCOUNT_NUMBER, PROBE_COUNTER, ORIG_TXN_DATA, HOST_RESPCODE FROM CMS_PROBE_POOL WHERE to_char(PROBE_DATE, 'DD-MON-YYYY HH24:MI') = to_char(sysdate, 'DD-MON-YYYY HH24:MI') AND (STATUS = 'FORPROBING' OR STATUS = 'ONGOING') AND PROBE_COUNTER &lt; ${probing.max.counter}"
-        update="UPDATE CMS_PROBE_POOL SET PROBE_COUNTER = NVL(PROBE_COUNTER, 0) + 1, STATUS = decode(PROBE_COUNTER, (${probing.max.counter} - 1), 'DONE', 'ONGOING'), PROBE_DATE = (PROBE_DATE + (${probing.minute.interval}/1440)) WHERE RRN IN (:rrn)"
+        query="SELECT PROBE_DATE, TRANSACTION_DATE, TRANS_ID, STATUS, PROBE_COUNTER, RESPONSE_CODE FROM TXN_PROBE_POOL WHERE DATE_FORMAT(PROBE_DATE, '%d-%b-%Y %H:%i') = DATE_FORMAT(NOW(), '%d-%b-%Y %H:%i') AND (STATUS = 'PROCESSING' OR STATUS = 'TIMEOUT') AND PROBE_COUNTER &lt; ${probing.max.counter}"
+        update="UPDATE TXN_PROBE_POOL SET PROBE_COUNTER = PROBE_COUNTER + 1, STATUS = IF(PROBE_COUNTER &lt; ${probing.max.counter}, 'PROCESSING', 'DONE'), PROBE_DATE = (PROBE_DATE + (${probing.minute.interval}/1440)) WHERE TRANS_ID IN (:transId)"
         row-mapper="probingRowMapper"
         channel="queryDBMessageChannel">
         <int:poller ref="probingPoller"/>
     </int-jdbc:inbound-channel-adapter>
 
-	<bean id="probingRowMapper" class="com.smarthub.mpg.services.probing.rowmapper.ProbingDataRowMapper" />
+	<bean id="probingRowMapper" class="xyz.mynt.internal.probing.rowmapper.ProbingDataRowMapper" />
 
 	<int:chain input-channel="queryDBMessageChannel" 
     	output-channel="splitProbeDatachannel">
@@ -46,20 +46,20 @@
 	<int:logging-channel-adapter channel="splitProbeDatachannel" expression="''" />
 
 	<int:transformer input-channel="transformChannel" output-channel="retryChannelCondition"
-		ref="probingDataToISOTransformer" />
+		ref="probingDataToRequestTransformer" />
 
-	<bean id="probingDataToISOTransformer" class="com.smarthub.mpg.services.probing.transformer.ProbingDataToISOTransformer" />
+	<bean id="probingDataToRequestTransformer" class="xyz.mynt.internal.probing.transformer.ProbingDataToRequestTransformer" />
 	
     <!-- Provision router for multiple output channel implementation -->
 	<int:chain input-channel="retryChannelCondition">
     	<int:router ref="probingRouter" method="route" />
 	</int:chain>
 
-	<bean id="probingRouter" class="com.smarthub.mpg.services.probing.router.ProbingRouter">
+	<bean id="probingRouter" class="xyz.mynt.internal.probing.router.ProbingRouter">
 		<constructor-arg name="probingMap">
 			<!-- add additional channel here (per services) -->
 			<map>
-				<entry key="PAYRLL" value="payrollReverseRequestChannel" />
+				<entry key="NOTIFY" value="notifyProbingRequestChannel" />
 			</map>
 		</constructor-arg>
 	</bean>

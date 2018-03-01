@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-ip="http://www.springframework.org/schema/integration/ip"
+	xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.0.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+		http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+ 	<int:channel id="payrollUpdateChannel" />
+
+	<int:bridge input-channel="payrollReverseResponseChannel" output-channel="payrollUpdateChannel"/>
+ 	
+ 	<int-jdbc:stored-proc-outbound-channel-adapter channel="payrollUpdateChannel"                     
+                                               stored-procedure-name="pkmpgcmsretry.update_cms_retry_status"
+                                               data-source="modsDatasource"
+                                               auto-startup="true"
+                                               ignore-column-meta-data="true">
+        <int-jdbc:sql-parameter-definition name="P_IN_STATUS" direction="IN" type="VARCHAR" scale="32767"/>
+        <int-jdbc:sql-parameter-definition name="P_IN_RRN" direction="IN" type="VARCHAR" scale="32767"/>   
+        <int-jdbc:sql-parameter-definition name="P_IN_HOST_RESPCODE" direction="IN" type="VARCHAR" scale="32767"/>                           
+    	<int-jdbc:parameter name="P_IN_RRN" expression="payload.getString(37)" />
+    	<int-jdbc:parameter name="P_IN_HOST_RESPCODE" expression="payload.getString(39)" />
+    	<int-jdbc:parameter name="P_IN_STATUS" expression="payload.getString(39) == '00' ? 'REVERSED' 
+    							: payload.getString(39) == '30' or payload.getString(39) == '94' or payload.getString(39) == '96' ? 'DECLINED' 
+    							: 'ONGOING'" />
+	</int-jdbc:stored-proc-outbound-channel-adapter>
+	
+		
+</beans>

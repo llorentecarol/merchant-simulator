@@ -2,10 +2,12 @@ package xyz.mynt.internal.service;
 
 import java.net.SocketTimeoutException;
 
+import org.apache.http.HttpRequestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -18,7 +20,6 @@ import xyz.mynt.internal.config.AppConfig;
 import xyz.mynt.internal.exception.MerchantSimulatorConnectionException;
 import xyz.mynt.internal.exception.MerchantSimulatorException;
 import xyz.mynt.internal.exception.MerchantSimulatorTimeoutException;
-import xyz.mynt.internal.repository.TransactionLogJpaRepository;
 import xyz.mynt.internal.type.ProcessBarcodeRequest;
 import xyz.mynt.internal.type.ProcessBarcodeResponse;
 
@@ -33,24 +34,24 @@ public class BarcodeService {
 	@Autowired
 	private ObjectMapper objectMapper;
 	
-	@Autowired
-	private RestTemplate restTemplate;
-	
-	@Autowired
-	private TransactionLogJpaRepository transactionLogRepository;
-	
 	public ProcessBarcodeResponse processBarcode(ProcessBarcodeRequest processBarcodeRequest) throws Exception {
 
 		ProcessBarcodeResponse response = null;
 		
+		int timeout = processBarcodeRequest.getTimeout();
+		HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+		httpRequestFactory.setConnectionRequestTimeout(timeout);
+		httpRequestFactory.setConnectTimeout(timeout);
+		httpRequestFactory.setReadTimeout(timeout);
+		RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
+		
 		try {
-			
 			ResponseEntity<ProcessBarcodeResponse> responseEntity = restTemplate.postForEntity(appConfig.getEsbProcessBarcodeUrl(), processBarcodeRequest,
 					ProcessBarcodeResponse.class);
 			response = responseEntity.getBody();
 			
 		} catch (HttpClientErrorException e) {
-			e.printStackTrace();
+			
 			ProcessBarcodeResponse exResponse = objectMapper.readValue(e.getResponseBodyAsString(), ProcessBarcodeResponse.class);
 
 			LOGGER.error("HttpClientErrorException" + exResponse);
@@ -62,14 +63,13 @@ public class BarcodeService {
 			throw new MerchantSimulatorException(ApplicationConstants.NOT_FOUND_CODE, "", processBarcodeRequest);
 
 		} catch (ResourceAccessException e) {
-			System.out.println("timeouts");
-			e.getRootCause().printStackTrace();
+			
 			if (e.getRootCause() instanceof SocketTimeoutException) {
 				throw new MerchantSimulatorTimeoutException("", "", processBarcodeRequest);
 			}
 			throw new MerchantSimulatorConnectionException("", "", processBarcodeRequest);
 		} catch (Exception e) {
-			e.printStackTrace();
+			
 			throw new MerchantSimulatorConnectionException("", "generic error", processBarcodeRequest);
 		}
 

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<util:constant static-field="xyz.mynt.internal.ApplicationConstants.CHANNEL_INBOUND"
+		id="inbound" />
+	<util:constant
+		static-field="xyz.mynt.internal.ApplicationConstants.CHANNEL_OUTBOUND"
+		id="outbound" />
+
+	<bean id="traceLogChannelInterceptor"
+		class="xyz.mynt.internal.logging.interceptor.TraceLogChannelInterceptor"
+		abstract="true" />
+
+	<int:channel id="probingRequestTraceLogChannel">
+		<int:interceptors>
+			<bean parent="traceLogChannelInterceptor">
+				<property name="channelName" value="probingRequest" />
+				<property name="direction" ref="outbound" />
+			</bean>
+		</int:interceptors>
+	</int:channel>
+
+	<int:channel id="probingResponseTraceLogChannel">
+		<int:interceptors>
+			<bean parent="traceLogChannelInterceptor">
+				<property name="channelName" value="probingResponse" />
+				<property name="direction" ref="inbound" />
+			</bean>
+		</int:interceptors>
+	</int:channel>
+
+	<int:bridge input-channel="probingRequestTraceLogChannel"
+		output-channel="traceLogChannel" />
+	<int:bridge input-channel="probingResponseTraceLogChannel"
+		output-channel="traceLogChannel" />
+
+	<int:channel id="traceLogChannel" />
+	<int:transformer input-channel="traceLogChannel"
+		output-channel="traceLogQueue" ref="messageToTraceLogTransformer" />
+
+	<bean id="messageToTraceLogTransformer"
+		class="xyz.mynt.internal.probing.transformer.MessageToTraceLogTransformer">
+	</bean>
+
+	<int:channel id="traceLogQueue">
+		<!-- <int:interceptors> <bean class="xyz.mynt.internal.PayloadMaskingChannelInterceptor"> 
+			</bean> </int:interceptors> -->
+	</int:channel>
+
+	<int:service-activator input-channel="traceLogQueue"
+		ref="traceLogger" method="logMessage" />
+
+	<bean id="traceLogger" class="xyz.mynt.internal.logging.TraceLogger"/>
+
+</beans>

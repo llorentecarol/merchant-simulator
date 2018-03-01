@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.0.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+ 	
+ 	<int:channel id="probingRequestChannel"/>
+ 	<int:channel id="probingResponseChannel"/>
+ 	
+	<int:channel id="notifyProbingRequestChannel">
+		<int:dispatcher task-executor="notifyConcurrentTaskExecutor" />
+		<int:interceptors>
+			<int:wire-tap channel="probingRequestTraceLogChannel"/>			
+		</int:interceptors>
+	</int:channel>
+	
+	<int:bridge input-channel="notifyProbingRequestChannel" output-channel="probingRequestChannel"/>
+	
+	 <bean id="notifyConcurrentTaskExecutor" class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor">
+	 	<constructor-arg name="concurrentExecutor" ref="simulatorTaskExecutor" />
+	 </bean>
+
+	 <bean id="simulatorTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+	    <property name="corePoolSize" value="${probing.concurrency.concurrencyLimit}" />
+	    <property name="maxPoolSize" value="${probing.concurrency.maxPoolSize}" />
+	    <property name="queueCapacity" value="${probing.concurrency.queueCapacity}" />
+	</bean>
+	
+	<int:bridge input-channel="probingResponseChannel" output-channel="notifyProbingResponseChannel"/>
+	
+	<int:channel id="notifyProbingResponseChannel">
+		<int:interceptors>
+			<int:wire-tap channel="probingResponseTraceLogChannel"/>
+		</int:interceptors>
+	</int:channel>
+	
+	<int:gateway id="notifyService"
+         service-interface="xyz.mynt.internal.service.NotifyServiceInterface">
+         <int:method name="notifyBarcode" request-channel="probingRequestChannel" reply-channel="probingResponseChannel"/>
+     </int:gateway>
+     
+     <!-- 
+     <int:service-activator id="issuer0810MessageService"
+		input-channel="reverseRequestChannel" ref="isoClientLoadBalancer" method="handleMessage" />
+      -->
+</beans>

@@ -33,9 +33,13 @@ public class AppConfig
 	@Value("${esb.barcode.notify.barcode.url}")
 	@Getter @Setter private String esbNotifyBarcodeUrl;
 	
+	@Value("${probing.poller.config}")
+	@Getter @Setter private int firstProbingDateConfig;
+	
 	@Autowired
 	private DataSource dataSource;
 	
+	/*
 	@Bean
 	public RestTemplate restTemplate() {
 		HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
@@ -45,6 +49,7 @@ public class AppConfig
 		RestTemplate restTemplate = new RestTemplate(httpRequestFactory);
 		return restTemplate;
 	}
+	*/
 	
 	@Bean
 	public JdbcTemplate jdbcTemplate(){

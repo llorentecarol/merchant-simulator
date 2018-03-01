@@ -47,8 +47,9 @@ public class HomeController {
         	loggerService.logTransaction(transId, ApplicationConstants.TXN_SUCCESSFUL, response, ApplicationConstants.CHANNEL_INBOUND);
 		} catch (Exception e) {
 			LOGGER.info("Exception occurred " + e.getMessage());
-			model.put("error", e.toString());
+			model.put("error", "Sorry, the transaction encountered the ff error: " + e.toString());
 			loggerService.logTransaction(transId, ApplicationConstants.TXN_FAILED, processBarcodeRequest.toString(), ApplicationConstants.CHANNEL_INBOUND);
+			loggerService.probeTransaction(transId, ApplicationConstants.TXN_TIMEOUT, ApplicationConstants.CHANNEL_INTERNAL, processBarcodeRequest);
 		}
     	
         model.put("request", "Request: " + processBarcodeRequest);
