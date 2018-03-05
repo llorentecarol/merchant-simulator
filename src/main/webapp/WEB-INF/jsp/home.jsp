@@ -1,15 +1,26 @@
 <!DOCTYPE html>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="spring-form" uri="http://www.springframework.org/tags/form"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <html lang="en">
+<!-- 
+<head>
+	<link rel="stylesheet" type="text/css" href="/webjars/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/webjars/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/webjars/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</head>
+ -->
 <head>
 
 	<!-- Access the bootstrap Css like this,
 		Spring boot will handle the resource mapping automcatically -->
 	<link rel="stylesheet" type="text/css" href="webjars/bootstrap/3.3.7/css/bootstrap.min.css" />
-	 
-	<c:url value="/css/basic.css" var="jstlCss" />
+
+	<spring:url value="/css/main.css" var="springCss" />
+	<link href="${springCss}" rel="stylesheet" />
+	<c:url value="/css/main.css" var="jstlCss" />
 	<link href="${jstlCss}" rel="stylesheet" />
+
 </head>
 <body>
 
@@ -33,40 +44,62 @@
 		
 			<br>
 			
-			<form action="/process-barcode">
+			<spring-form:form method="POST" action="/process-barcode" modelAttribute="initializeProcessRequest">
 			
-				<table style="width:50%" cellpadding="10">
+				<table style="width:50%">
 					<tr>
-						<td>Simulate Timeout</td>
-						<td>
-							<select name="timeout">
-							    <option value="2000">2 seconds</option>
+						<td><spring-form:label path="timeout">Simulate Timeout</spring-form:label></td>
+                    	<td><spring-form:select path="timeout" style="width:100%;box-sizing: border-box;">
+                    			<option value="2000">2 seconds</option>
 							    <option value="5000">5 seconds</option>
 							    <option value="10000">10 seconds</option>
 							    <option value="60000">1 minute</option>
-							  </select>
+							</spring-form:select>    
 						</td>
 					</tr>
 					<tr>
-						<td>Service Type</td>
-						<td>
-							<select name="serviceType">
+		                <td><spring-form:label path="merchantId">Merchant ID</spring-form:label></td>
+		                <td><spring-form:input path="merchantId" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+		            <tr>
+		                <td><spring-form:label path="merchantTransId">Merchant Trans ID</spring-form:label></td>
+		                <td><spring-form:input path="merchantTransId" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+		            <tr>
+		                <td><spring-form:label path="merchantWallet">Merchant Wallet</spring-form:label></td>
+		                <td><spring-form:input path="merchantWallet" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+		            <tr>
+		                <td><spring-form:label path="merchantPin">Merchant PIN</spring-form:label></td>
+		                <td><spring-form:input path="merchantPin" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+		            <tr>
+		                <td><spring-form:label path="amount">Amount</spring-form:label></td>
+		                <td><spring-form:input path="amount" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+		            <tr>
+		                <td><spring-form:label path="transactionDetails">transactionDetails</spring-form:label></td>
+		                <td><spring-form:input path="transactionDetails" style="width:100%;box-sizing: border-box;"/></td>
+		            </tr>
+					<tr>
+						<td><spring-form:label path="serviceType">Service Type</spring-form:label></td>
+						<td><spring-form:select path="serviceType" style="width:100%;box-sizing: border-box;">
 							    <option value="00">General Cashin</option>
 							    <option value="01">General Payments</option>
 							    <option value="02">711 Specific Cashin</option>
-							  </select>
+							</spring-form:select>
 						</td>
 					</tr>
 					<tr>
-						<td>Barcode</td>
-						<td><input type="text" style="width:100%;box-sizing: border-box;" name="barcodeString"></td>
+						<td><spring-form:label path="barcodeString">Barcode</spring-form:label></td>
+						<td><spring-form:input path="barcodeString" style="width:100%;box-sizing: border-box;"/></td>
 					</tr>
 					<tr>
 						<td></td>
 						<td><input type="submit" value="Process CashIn"/></td>
 					</tr>
 				</table>
-			</form>
+			</spring-form:form>
 
 		</div>
 		<div class="starter-template">
@@ -77,8 +110,7 @@
 		</div>
 
 	</div>
-
 	<script type="text/javascript" src="webjars/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
+	
 </body>
 </html>

@@ -20,6 +20,8 @@ import xyz.mynt.internal.config.AppConfig;
 import xyz.mynt.internal.exception.MerchantSimulatorConnectionException;
 import xyz.mynt.internal.exception.MerchantSimulatorException;
 import xyz.mynt.internal.exception.MerchantSimulatorTimeoutException;
+import xyz.mynt.internal.type.NotifyBarcodeRequest;
+import xyz.mynt.internal.type.NotifyBarcodeResponse;
 import xyz.mynt.internal.type.ProcessBarcodeRequest;
 import xyz.mynt.internal.type.ProcessBarcodeResponse;
 
@@ -38,7 +40,7 @@ public class BarcodeService {
 
 		ProcessBarcodeResponse response = null;
 		
-		int timeout = processBarcodeRequest.getTimeout();
+		int timeout = 10; //processBarcodeRequest.getTimeout();
 		HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
 		httpRequestFactory.setConnectionRequestTimeout(timeout);
 		httpRequestFactory.setConnectTimeout(timeout);
@@ -118,91 +120,12 @@ public class BarcodeService {
         return responseEntity.getBody();
         */
     }
+
+	public NotifyBarcodeResponse notifyBarcode(NotifyBarcodeRequest request) {
+		// TODO
+		NotifyBarcodeResponse response = new NotifyBarcodeResponse();
+		response.setAmount(request.getAmount());
+		return response;
+	}
 	
-	/*
-    public Issues retrieveIssues(User user) {
-    	
-    	//TODO: change this to Criteria Builder to dynamically create json request
-    	String requestJSON = "{ \"jql\" : \"project = HRANOMMNL AND assignee in ('pcruz', 'llorente')\" }";
-    	
-    	ResponseEntity<Issues> responseEntity = null;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        final HttpEntity<String> entity = new HttpEntity<String>(requestJSON,headers);
-        
-    	try {
-
-    		restTemplate.getInterceptors().add(new BasicAuthorizationInterceptor(user.getName(), user.getPassword()));
-    		responseEntity = restTemplate.exchange(
-    				GET_ISSUE_URI, HttpMethod.POST, entity, Issues.class);
-    		
-    		System.out.println("STATUS CODE " + responseEntity.getStatusCode() + ":  " + responseEntity.getStatusCode().getReasonPhrase());
-    		
-    		if (responseEntity.getStatusCode() == HttpStatus.CREATED) {
-    			System.out.println(responseEntity.getBody());
-    	    }  else if (responseEntity.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-    		  // nono... bad credentials
-    		}
-            
-    	  } catch (final HttpClientErrorException httpClientErrorException) {
-    		  	System.out.println("HttpClientErrorException !!!!!!!!!!!!!!!!!!!!");
-    	        throw httpClientErrorException;
-    	  } catch (HttpServerErrorException httpServerErrorException) {
-  		  		System.out.println("HttpServerErrorException !!!!!!!!!!!!!!!!!!!!");
-    	        throw httpServerErrorException;
-    	  } catch (Exception exception) {
-
-    		  	System.out.println("GENERIC SHIT !!!!!!!!!!!!!!!!!!!!");    		  	
-    	        exception.printStackTrace();
-    	  } 
-
-        return responseEntity.getBody();
-    }
-    
-    
-    public WorkLogs logWork(User user, String issueKey, LogWork logWork) {
-    	
-    	//TODO: change this to Criteria Builder to dynamically create json request
-    	String requestJSON = "{\"timeSpent\" : \"1h\", \"comment\" : \"carol spring test\"}";
-    	
-    	ResponseEntity<WorkLogs> responseEntity = null;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        final HttpEntity<String> entity = new HttpEntity<String>(requestJSON,headers);
-        
-    	try {
-    		System.out.println("REQUEST JSON: " + requestJSON);
-    		System.out.println("USER: " + user);
-    		
-    		restTemplate.getInterceptors().add(new BasicAuthorizationInterceptor(user.getName(), user.getPassword()));
-    		responseEntity = restTemplate.exchange(
-    				POST_LOG_WORK_URI,
-    				HttpMethod.POST, 
-    				entity, 
-    				WorkLogs.class,
-    				issueKey);
-    		
-    		System.out.println("STATUS CODE " + responseEntity.getStatusCode() + ":  " + responseEntity.getStatusCode().getReasonPhrase());
-    		
-    		if (responseEntity.getStatusCode() == HttpStatus.CREATED) {
-    			System.out.println(responseEntity.getBody());
-    	    }  else if (responseEntity.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-    		  // nono... bad credentials
-    		}
-            
-    	  } catch (final HttpClientErrorException httpClientErrorException) {
-    		  	System.out.println("HttpClientErrorException !!!!!!!!!!!!!!!!!!!!");
-    	        throw httpClientErrorException;
-    	  } catch (HttpServerErrorException httpServerErrorException) {
-  		  		System.out.println("HttpServerErrorException !!!!!!!!!!!!!!!!!!!!");
-    	        throw httpServerErrorException;
-    	  } catch (Exception exception) {
-
-    		  	System.out.println("GENERIC SHIT !!!!!!!!!!!!!!!!!!!!");    		  	
-    	        exception.printStackTrace();
-    	  } 
-
-        return responseEntity.getBody();
-    }
-    */
 }
