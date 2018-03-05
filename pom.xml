@@ -144,7 +144,7 @@
 				<configuration>
 					<changeLogFile>db-changelog-master.xml</changeLogFile>
 					<driver>org.postgresql.Driver</driver>
-					<url>jdbc:postgresql://ec2-50-17-206-214.compute-1.amazonaws.com:5432/d2s5v2f9uosncp</url>
+					<url>jdbc:postgresql://ec2-50-17-206-214.compute-1.amazonaws.com:5432/d2s5v2f9uosncp?sslmode=require</url>
 					<username>ionupjagfdcayb</username>
 					<password>40a434faf9a5f97ed027cfa44d3d7375463c9948e271612a1f3dfebbf836de55</password>
 				</configuration>
