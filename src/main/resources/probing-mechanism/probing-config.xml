@@ -6,10 +6,10 @@
 	xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
 	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
-		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.0.xsd
-		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd
 		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
-		http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip-4.0.xsd
+		http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
 	<int:poller id="probingPoller" fixed-rate="${probing.poller.config}"/>
@@ -29,8 +29,8 @@
 
 	<int-jdbc:inbound-channel-adapter
 		data-source="dataSource"
-        query="SELECT PROBE_DATE, TRANSACTION_DATE, TRANS_ID, STATUS, PROBE_COUNTER, RESPONSE_CODE FROM TXN_PROBE_POOL WHERE DATE_FORMAT(PROBE_DATE, '%d-%b-%Y %H:%i') = DATE_FORMAT(NOW(), '%d-%b-%Y %H:%i') AND (STATUS = 'PROCESSING' OR STATUS = 'TIMEOUT') AND PROBE_COUNTER &lt; ${probing.max.counter}"
-        update="UPDATE TXN_PROBE_POOL SET PROBE_COUNTER = PROBE_COUNTER + 1, STATUS = IF(PROBE_COUNTER &lt; ${probing.max.counter}, 'PROCESSING', 'DONE'), PROBE_DATE = (PROBE_DATE + (${probing.minute.interval}/1440)) WHERE TRANS_ID IN (:transId)"
+        query="SELECT PROBE_DATE, TRANSACTION_DATE, TRANS_ID, STATUS, PROBE_COUNTER, RESPONSE_CODE FROM TXN_PROBE_POOL WHERE TO_CHAR(PROBE_DATE, 'DD-MON-YYYY HH24:MI') = TO_CHAR(NOW(), 'DD-MON-YYYY HH24:MI') AND (STATUS = 'PROCESSING' OR STATUS = 'TIMEOUT') AND PROBE_COUNTER &lt; ${probing.max.counter}"
+        update="UPDATE TXN_PROBE_POOL SET PROBE_COUNTER = PROBE_COUNTER + 1, STATUS = (case PROBE_COUNTER when (${probing.max.counter} - 1) then 'DONE' else 'PROCESSING' end), PROBE_DATE = ( PROBE_DATE + (${probing.minute.interval} * interval '1 minute')) WHERE TRANS_ID IN (:transId)"
         row-mapper="probingRowMapper"
         channel="queryDBMessageChannel">
         <int:poller ref="probingPoller"/>

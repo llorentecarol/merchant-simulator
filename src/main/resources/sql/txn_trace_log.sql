@@ -1,9 +1,9 @@
 create table txn_trace_log(
-	id bigint(16) not null,
+	id bigint PRIMARY KEY not null,
 	logtime TIMESTAMP,
 	trans_id varchar(30),
 	channel varchar(30),
 	direction varchar(30),
-	payload varchar(200),
-	PRIMARY KEY (id),
-	INDEX (trans_id, logtime));
+	payload varchar(200));
+CREATE INDEX txn_trace_log_index
+ON txn_trace_log (trans_id, logtime);

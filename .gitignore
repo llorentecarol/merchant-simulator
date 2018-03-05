@@ -3,6 +3,8 @@ ompiled class file
 target/
 # Log file
 *.log
+bin/*
+.classpath
 
 # BlueJ files
 *.ctxt
